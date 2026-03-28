@@ -119,14 +119,5 @@ router.post('/patients/:id/consultations', async (req, res) => {
   }
 });
 
-/**
- * AI PLACEHOLDER ENDPOINT
- */
-router.post('/ai/recommendations', (req, res) => {
-  const { patient_id } = req.body;
-  res.json({
-    recommendation: "Esta es una recomendación generada por IA (Placeholder). Basado en el progreso, mantén una buena hidratación y aumenta el consumo de proteínas magras."
-  });
-});
 
 module.exports = router;
