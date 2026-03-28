@@ -45,10 +45,17 @@ const initDB = async () => {
     }
 
     try {
-      await pool.query('ALTER TABLE patients ADD COLUMN next_appointment DATE');
+      await pool.query('ALTER TABLE patients ADD COLUMN next_appointment TIMESTAMP');
       console.log('Added next_appointment column to patients table');
     } catch (err) {
-      if (err.code !== '42701') console.error('Error adding next_appointment column:', err);
+      if (err.code !== '42701') {
+         console.error('Error adding next_appointment column:', err);
+      } else {
+         // Si ya existía (probablemente como DATE), lo convertimos a TIMESTAMP para soportar horas
+         try {
+           await pool.query('ALTER TABLE patients ALTER COLUMN next_appointment TYPE TIMESTAMP');
+         } catch(e) {}
+      }
     }
 
     console.log('PostgreSQL Database initialized successfully');
