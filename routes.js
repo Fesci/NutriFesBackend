@@ -25,6 +25,14 @@ router.post('/patients', async (req, res) => {
   }
 
   try {
+    // Chequear duplicidad
+    const existing = await db.query(
+      'SELECT id FROM patients WHERE first_name = $1 AND last_name = $2 AND age = $3', 
+      [first_name, last_name, parseInt(age)]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Ya existe un paciente registrado con ese mismo nombre, apellido y edad.' });
+    }
     const result = await db.query(
       'INSERT INTO patients (first_name, last_name, age, height, goal, phone) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
       [first_name, last_name, parseInt(age), parseFloat(height), goal || null, phone || null]
