@@ -34,6 +34,23 @@ const initDB = async () => {
         notes TEXT
       );
     `);
+
+    // Add new columns safely for the new features (Tags & Next Appointment)
+    try {
+      await pool.query('ALTER TABLE patients ADD COLUMN tags JSONB DEFAULT \'[]\'::jsonb');
+      console.log('Added tags column to patients table');
+    } catch (err) {
+      // 42701 is the Postgres error code for "duplicate_column"
+      if (err.code !== '42701') console.error('Error adding tags column:', err);
+    }
+
+    try {
+      await pool.query('ALTER TABLE patients ADD COLUMN next_appointment DATE');
+      console.log('Added next_appointment column to patients table');
+    } catch (err) {
+      if (err.code !== '42701') console.error('Error adding next_appointment column:', err);
+    }
+
     console.log('PostgreSQL Database initialized successfully');
   } catch (err) {
     console.error('Error initializing PostgreSQL database:', err);

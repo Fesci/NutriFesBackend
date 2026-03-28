@@ -19,7 +19,7 @@ router.get('/patients', async (req, res) => {
 
 // Create a new patient
 router.post('/patients', async (req, res) => {
-  const { first_name, last_name, age, height, goal, phone } = req.body;
+  const { first_name, last_name, age, height, goal, phone, tags } = req.body;
   if (!first_name || !last_name || !age || !height) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
@@ -34,8 +34,8 @@ router.post('/patients', async (req, res) => {
       return res.status(400).json({ error: 'Ya existe un paciente registrado con ese mismo nombre, apellido y edad.' });
     }
     const result = await db.query(
-      'INSERT INTO patients (first_name, last_name, age, height, goal, phone) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-      [first_name, last_name, parseInt(age), parseFloat(height), goal || null, phone || null]
+      'INSERT INTO patients (first_name, last_name, age, height, goal, phone, tags) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      [first_name, last_name, parseInt(age), parseFloat(height), goal || null, phone || null, JSON.stringify(tags || [])]
     );
     res.status(201).json({ id: result.rows[0].id });
   } catch (err) {
@@ -82,7 +82,7 @@ router.get('/patients/:id/consultations', async (req, res) => {
 // Add a new consultation
 router.post('/patients/:id/consultations', async (req, res) => {
   const patient_id = req.params.id;
-  const { weight, notes, date } = req.body;
+  const { weight, notes, date, next_appointment } = req.body;
 
   if (!weight) {
     return res.status(400).json({ error: 'Weight is required' });
@@ -111,6 +111,10 @@ router.post('/patients/:id/consultations', async (req, res) => {
         "INSERT INTO consultations (patient_id, date, weight, bmi, notes) VALUES ($1, CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AT TIME ZONE 'America/Argentina/Buenos_Aires', $2, $3, $4) RETURNING id",
         [patient_id, weight, bmi.toFixed(2), notes || null]
       );
+    }
+    
+    if (next_appointment) {
+      await db.query('UPDATE patients SET next_appointment = $1 WHERE id = $2', [next_appointment, patient_id]);
     }
     
     res.status(201).json({ id: result.rows[0].id, bmi: bmi.toFixed(2) });
