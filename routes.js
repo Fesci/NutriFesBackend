@@ -54,6 +54,38 @@ router.get('/patients/:id', async (req, res) => {
   }
 });
 
+// Update full patient profile
+router.put('/patients/:id', async (req, res) => {
+  const { first_name, last_name, age, height, goal, phone, tags, next_appointment } = req.body;
+  if (!first_name || !last_name || !age || !height) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    await db.query(
+      `UPDATE patients 
+       SET first_name = $1, last_name = $2, age = $3, height = $4, goal = $5, phone = $6, tags = $7, next_appointment = $8
+       WHERE id = $9`,
+      [first_name, last_name, parseInt(age), parseFloat(height), goal || null, phone || null, JSON.stringify(tags || []), next_appointment || null, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update a patient's next appointment
+router.put('/patients/:id/next_appointment', async (req, res) => {
+  const { next_appointment } = req.body;
+  try {
+    // Si next_appointment es string vacio o null, pasamos null a la DB
+    await db.query('UPDATE patients SET next_appointment = $1 WHERE id = $2', [next_appointment || null, req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Update a patient's goal
 router.put('/patients/:id/goal', async (req, res) => {
   const { goal } = req.body;
